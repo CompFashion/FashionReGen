@@ -4,8 +4,12 @@ import re
 import os
 import random
 
+from openai import OpenAI
+
+from description_generation import overview_analysis_gen
+
 category_specific = {'Dress&Skirts': ['dresses', 'skirts'],
-                     'Jackets&Coats&Outenvear': ['coats', 'jackets'],
+                     'Jackets&Coats&Outerwear': ['coats', 'jackets'],
                      'Topweights': ['blouses and woven tops', 'knits and jersey tops', 'shirts', 'tops', 'sweaters'],
                      'Trousers&Shorts': ['trousers', 'jumpsuits', 'shorts']}
 
@@ -23,6 +27,7 @@ class Result:
 
 def get_content(year, season, category, brand):
     # plt.clf()
+    title = '# Catwalk Analytics: ' + ' '.join([category, season, ' '.join(brand)])
     print(str(year) + str(season) + str(category) + str(brand))
     metrics = cal_metrics(year, season, category, brand)
     sub_metrics_ind = random.randint(0, len(metrics.keys()) - 1)
@@ -35,7 +40,10 @@ def get_content(year, season, category, brand):
     img_path = search_img(year, season, category, brand)
     # random select k imgs
     img_ind = random.sample(range(len(img_path)), 3)
-    return chart_path, bar_path, line_path, img_path[img_ind[0]], img_path[img_ind[1]], img_path[img_ind[2]]
+    description = description_gen(year, season, category, [chart_path, bar_path, line_path])
+    categories = category_specific.get(category)
+    return title, description, chart_path, bar_path, line_path, img_path[img_ind[0]], img_path[img_ind[1]], img_path[
+        img_ind[2]]
 
 
 def cal_metrics(year, season, category, brand):
@@ -52,6 +60,8 @@ def cal_metrics(year, season, category, brand):
     metrics = {}
     data_format = {}
     for b in brand:
+        if b == 'givenchy' and year == '2022':
+            continue
         with open(
                 'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year +
                 '-original/category_attribute_count.json', 'r') as file:
@@ -88,6 +98,8 @@ def cal_share(year, season, category, brand):
     overall_amount = 0
     amount = 0
     for b in brand:
+        if b == 'givenchy' and year == '2022':
+            continue
         with open(
                 'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year +
                 '-original/category_count.json', 'r') as file2:
@@ -115,7 +127,7 @@ def pie_chart(year, season, category, brand):
     ratio = cal_share(year, season, category, brand)
     ax1.pie([ratio, 1 - ratio], labels=[category, 'other category'], autopct='%.2f%%')
     chart_path = "data/charts/pie/" + category + ".png"
-    ax1.set_title("Share of "+ category)
+    ax1.set_title("Share of " + category)
     fig1.savefig(chart_path, transparent=True)
     return chart_path
 
@@ -130,7 +142,7 @@ def bar_char(metrics, year, season, category, brand, sub_metrics_name):
         for i, v in enumerate(list(minus_metrics.values())):
             ax2.text(v + 1, i, str(v), va='center', fontsize=3)
         bar_path = "data/charts/bar/" + category + ".png"
-        ax2.set_title(sub_metrics_name + ' compared with last year')
+        ax2.set_title(sub_metrics_name + ' shifts YoY')
         fig2.savefig(bar_path, transparent=True)
         return bar_path
     else:
@@ -218,3 +230,65 @@ def minus_dict(dict1, dict2):
     for key in all_keys:
         minus_dict[key] = dict1.get(key, 0) - dict2.get(key, 0)
     return minus_dict
+
+
+def description_gen(year_need, season_need, cate_need, images):
+    api_key = ""
+    client = OpenAI(api_key=api_key)
+
+    conf = {}
+    year = "23_24"
+    cate_need_dic = {'Dress&Skirts': "Dresses___Skirts", 'Jackets&Coats&Outerwear': 'Jackets___Coats',
+                     'Topweights': 'Topweights', 'Trousers&Shorts': 'Trousers__Shorts'}
+    # cate = "Dresses___Skirts"  # "Jackets___Coats" #
+    cate = cate_need_dic[cate_need]
+    season = "A_W"  # "S_S"
+    season_year = season + "_" + year
+
+    conf["name"] = "_".join([cate, season, year])
+    conf["overview"] = True
+    wgsn_data = json.load(open("description_generation/wgsn_report_data/conf.json"))
+    wgsn_report_slot_image = overview_analysis_gen.get_report_slot_image_data(wgsn_data)
+    one_data = overview_analysis_gen.get_one_data(wgsn_report_slot_image, conf)
+    if one_data is not None:
+        name, data = one_data
+    else:
+        name, data = overview_analysis_gen.get_one_data_category(wgsn_report_slot_image, conf, cate)
+
+    slot = data["slots"]
+    # images = data["img_paths"]
+    base64_image_list = overview_analysis_gen.encode_image(images)
+
+    example_list = overview_analysis_gen.get_examples(wgsn_report_slot_image, season_year, cate, conf)
+    text_instruct = "You are given several charts describing the fashion status specifically for %s of %s. Each chart is about one specific aspect, e.g., fabric, sihloette. You are also given several examples of textual analysis based on charts as follows: %s. Try to generate several paragraphs (less than FIVE) in the format of an article. The length of the article should be around 250 characters. Do not use any key points or subtitles. " % (
+        cate_need, "_".join([year_need, season_need]), ";".join(example_list))
+
+    message = [
+        {"role": "system",
+         "content": "You are an analyst who's expertised in fashion. "
+         },
+        {"role": "user",
+         "content": [
+                        {
+                            "type": "text",
+                            "text": text_instruct
+                        }]
+                    + base64_image_list
+         },
+    ]
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    payload = {
+        "model": "gpt-4-vision-preview",
+        "messages": message,
+        "max_tokens": 1000
+    }
+
+    response = overview_analysis_gen.requests.post("https://api.openai.com/v1/chat/completions", headers=headers,
+                                                   json=payload)
+    results = response.json()["choices"][0]["message"]["content"]
+    return results

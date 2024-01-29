@@ -1,5 +1,5 @@
 import gradio as gr
-from model import get_content, Result
+from model import get_content, category_specific
 import json
 
 css = """
@@ -41,10 +41,10 @@ css = """
 with gr.Blocks(css=css) as demo:
     with gr.Row():
         with gr.Column(scale=1):
-            year = gr.Dropdown(['2019', '2020', '2021', '2022', '2023'], label='year', value='2019')
+            year = gr.Dropdown(['2020', '2021', '2022', '2023'], label='year', value='2020')
             season = gr.Dropdown(['springsummer', 'winter'], label='season', value='springsummer')
             category = gr.Dropdown(
-                ['Dress&Skirts', 'Jackets&Coats&Outenvear', 'Topweights', 'Trousers&Shorts'],
+                ['Dress&Skirts', 'Jackets&Coats&Outerwear', 'Topweights', 'Trousers&Shorts'],
                 value='Dress&Skirts', label='category')
             brand = gr.CheckboxGroup(
                 ['chanel', 'christian-dior', 'givenchy', 'louis-vuitton', 'saint-laurent', 'valentino'],
@@ -54,17 +54,15 @@ with gr.Blocks(css=css) as demo:
             with gr.Column(variant='panel', elem_classes=['title_page']):
                 with gr.Row():
                     with gr.Column(scale=1):
-                        gr.Markdown("# Title page")
-                        content = gr.Markdown(value='default')
+                        # gr.Markdown("# Title page")
+                        content = gr.Markdown()
                     with gr.Column(scale=2):
                         gr.Image(value='content/img.png', min_width=500)
     with gr.Row():
         with gr.Column(elem_classes=['page2']):
             with gr.Row():
-                with gr.Column(variant='panel', scale=2):
-                    gr.Markdown("""
-                    # Description
-                    """)
+                with gr.Column(variant='panel', scale=1):
+                    description = gr.Markdown()
                 with gr.Column(variant='panel', scale=2):
                     gr.Markdown("# Charts")
                     chart_path = gr.Image()
@@ -75,7 +73,11 @@ with gr.Blocks(css=css) as demo:
                     img1 = gr.Image()
                     img2 = gr.Image()
                     img3 = gr.Image()
+
+    for i in category_specific[category.value]:
+        gr.Column(elem_classes=['page2'], variant='panel')
+
     generate.click(fn=get_content, inputs=[year, season, category, brand],
-                   outputs=[chart_path, bar_path, line_path, img1, img2, img3])
+                   outputs=[content, description, chart_path, bar_path, line_path, img1, img2, img3])
 
 demo.launch(share=False)
