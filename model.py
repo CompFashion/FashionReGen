@@ -4,11 +4,14 @@ import re
 import os
 import random
 import requests, datetime
-
+import yaml
 from openai import OpenAI
 
 from description_generation import overview_analysis_gen, section_analysis_gen
 
+f = open(r'./key.yaml',encoding='utf-8')
+key_data = yaml.load(f.read(),Loader=yaml.FullLoader)
+api_key = key_data['api_key']
 
 category_specific = {'Dresses&Skirts': ['dresses', 'skirts'],
                      'Jackets&Coats&Outerwear': ['coats', 'jackets'],
