@@ -101,9 +101,13 @@ with gr.Blocks(css=css) as demo:
                     with gr.Row():
                         section_fig7 = gr.Image()
                         section_fig8 = gr.Image()
+
+    overview_dict = gr.Json(visible=False)
+    section_dict = gr.Json(visible=False)
+
     generate.click(fn=get_content, inputs=[year, season, category, brand],
                    outputs=[cover_img, content, description, chart_path, line_path, img1, img2, img3, section_fig1, section_fig2,
                             section_fig3, section_fig4, section_description, section_fig5, section_fig6, section_fig7,
-                            section_fig8, section_description2])
+                            section_fig8, section_description2, overview_dict, section_dict])
 
 demo.launch(share=True)

@@ -9,8 +9,8 @@ from openai import OpenAI
 
 from description_generation import overview_analysis_gen, section_analysis_gen
 
-f = open(r'./key.yaml',encoding='utf-8')
-key_data = yaml.load(f.read(),Loader=yaml.FullLoader)
+f = open(r'./key.yaml', encoding='utf-8')
+key_data = yaml.load(f.read(), Loader=yaml.FullLoader)
 api_key = key_data['api_key']
 
 category_specific = {'Dresses&Skirts': ['dresses', 'skirts'],
@@ -38,12 +38,15 @@ class Result:
 
 
 def get_content(year, season, category, brand):
-    cover_img = 'data/chanel page/Chanel-SS-' + year[-2:] +'.jpeg'
     if season == 'Spring/Summer (S/S)':
         season = 'springsummer'
-    content, description, chart_path, line_path, img1, img2, img3 = get_overview_content(year, season, category, brand)
+    cover_img = search_cover_img(year, season, brand)
+    content, description, chart_path, line_path, img1, img2, img3, overview_dict = get_overview_content(year,
+                                                                                                        season,
+                                                                                                        category,
+                                                                                                        brand)
     if category == 'Dresses&Skirts':
-        get_section_content(year, season, category, brand)
+        section_dict = get_section_content(year, season, category, brand)
         section_fig1 = "data/charts/bar/dresses_" + year + "_silhouette.png"
         section_fig2 = "data/charts/bar/dresses_" + year + "_detail.png"
         section_fig3 = "data/charts/bar/dresses_" + year + "_neckline.png"
@@ -62,7 +65,7 @@ def get_content(year, season, category, brand):
             section_fig7 = section_fig8 = section_description2 = None
     return (cover_img, content, description, chart_path, line_path, img1, img2, img3, section_fig1, section_fig2,
             section_fig3, section_fig4, section_description, section_fig5, section_fig6, section_fig7,
-            section_fig8, section_description2)
+            section_fig8, section_description2, overview_dict, section_dict)
 
 
 def get_overview_content(year, season, category, brand):
@@ -82,27 +85,32 @@ def get_overview_content(year, season, category, brand):
     sub_metrics_ind = random.randint(0, len(metrics.keys()) - 1)
     sub_metrics_name = list(metrics.keys())[sub_metrics_ind]
     sub_metrics = metrics.get(sub_metrics_name)
-    chart_path = pie_chart(year, season, category, brand)
+    pie_path, pie_dict = pie_chart(year, season, category, brand)
     print(str(metrics))
-    bar_path = bar_char(sub_metrics, year, season, category, brand, sub_metrics_name)
-    line_path = line_chart_all_category(season, year, brand)
+    bar_path, bar_dict = bar_char(sub_metrics, year, season, category, brand, sub_metrics_name)
+    line_path, line_dict = line_chart_all_category(season, year, brand)
     img_path = search_img(year, season, category, brand)
     # random select k imgs
     img_ind = random.sample(range(len(img_path)), 3)
-    description = description_gen(year, season, category, [chart_path, bar_path, line_path])
+    description = description_gen(year, season, category, [pie_path, bar_path, line_path])
     categories = category_specific.get(category)
-    return title, description, chart_path, line_path, img_path[img_ind[0]], img_path[img_ind[1]], img_path[
-        img_ind[2]]
+    overview_dict = {"type":"overview", "data": [pie_dict, line_dict]}
+    return title, description, pie_path, line_path, img_path[img_ind[0]], img_path[img_ind[1]], img_path[
+        img_ind[2]], overview_dict
 
 
 def get_section_content(year, season, category, brand):
     cates = category_specific[category]
+    dict_list = list()
     for cate in cates:
+        cate_dict = {"category": cate}
         metrics = cal_metrics(year, season, cate, brand, sub_category=True)
+        metrics_previous = cal_metrics(str(int(year) - 1), season, cate, brand, sub_category=True)
         if cate == 'dresses':
+            dict_data = list()
             for item in ['silhouette', 'detail', 'neckline', 'sleeve']:
                 ax5.clear()
-                data = metrics[item]
+                data = minus_dict(metrics[item], metrics_previous[item])
                 x = list(data.keys())
                 y = list(data.values())
                 # Combine keys and values and sort by values
@@ -111,11 +119,14 @@ def get_section_content(year, season, category, brand):
                 ax5.barh(x_sorted, y_sorted, align='edge')
                 ax5_path = "data/charts/bar/dresses_" + year + "_" + item + ".png"
                 ax5.set_title(item + " shift YoY")
+                item_dict = {"attribute": item, "x": x_sorted, "y": y_sorted, "title":item + " shift YoY"}
+                dict_data.append(item_dict)
                 fig5.savefig(ax5_path, transparent=True)
         elif cate == 'skirts':
+            dict_data = list()
             for item in ['silhouette', 'detail']:
                 ax5.clear()
-                data = metrics[item]
+                data = minus_dict(metrics[item], metrics_previous[item])
                 x = list(data.keys())
                 y = list(data.values())
                 # Combine keys and values and sort by values
@@ -124,8 +135,13 @@ def get_section_content(year, season, category, brand):
                 ax5.barh(x_sorted, y_sorted, align='edge')
                 ax5_path = "data/charts/bar/skirts_" + year + "_" + item + ".png"
                 ax5.set_title(item + " shift YoY")
+                item_dict = {"attribute": item, "x": x_sorted, "y": y_sorted, "title":item + " shift YoY"}
+                dict_data.append(item_dict)
                 fig5.savefig(ax5_path, transparent=True)
-
+        cate_dict["data"] = dict_data
+        dict_list.append(cate_dict)
+    section_dict={"type":"section", "data":dict_list}
+    return section_dict
 
 def cal_metrics(year, season, category, brand, sub_category=False):
     '''
@@ -179,6 +195,13 @@ def cal_metrics(year, season, category, brand, sub_category=False):
                 sub_metrics['mini/short'] = sub_metrics.get('mini', 0) + sub_metrics.get('short', 0)
                 sub_metrics.pop('mini', 'no')
                 sub_metrics.pop('short', 'no')
+
+            # remove values that exist in length in silhouette, e.g, maxi, mini, midi
+            if (category == 'skirts' or category == 'dresses') and attribute == 'silhouette':
+                sub_metrics.pop('maxi', 'no')
+                sub_metrics.pop('mini', 'no')
+                sub_metrics.pop('short', 'no')
+                sub_metrics.pop('midi', 'no')
             metrics[attribute] = sub_metrics
     return metrics
 
@@ -214,6 +237,8 @@ def cal_share(year, season, category, brand):
 
 def line_chart_all_category(season, year_cur, brand):
     ax4.clear()
+    x_list = list()
+    y_list = list()
     for category in list(category_specific.keys()):
         shares = list()
         x = list()
@@ -225,12 +250,15 @@ def line_chart_all_category(season, year_cur, brand):
             shares.append(cal_share(year, season, category, brand))
             x.append(year)
         ax4.plot(x, shares, label=category)
+        x_list.append(x)
+        y_list.append(shares)
     ax4.legend()
     chart_path = "data/charts/line/all_category_" + str(brand) + ".png"
+    line_dict = {"type": "line", "x": x_list, "y": y_list, "title": "Change of share in 2019-" + year_cur}
     ax4.set_title("Change of share in 2019-" + year_cur)
     fig4.savefig(chart_path, transparent=True)
     plt.show()
-    return chart_path
+    return chart_path, line_dict
 
 
 def pie_chart(year, season, category, brand):
@@ -243,11 +271,13 @@ def pie_chart(year, season, category, brand):
     '''
     ax1.clear()
     ratio = cal_share(year, season, category, brand)
+    pie_dict = {'type': "pie", "x": [ratio, 1 - ratio], "y": [category, 'other category'],
+                "title": "Share of " + category}
     ax1.pie([ratio, 1 - ratio], labels=[category, 'other category'], autopct='%.2f%%')
     chart_path = "data/charts/pie/" + category + ".png"
     ax1.set_title("Share of " + category)
     fig1.savefig(chart_path, transparent=True)
-    return chart_path
+    return chart_path, pie_dict
 
 
 def bar_char(metrics, year, season, category, brand, sub_metrics_name):
@@ -256,13 +286,15 @@ def bar_char(metrics, year, season, category, brand, sub_metrics_name):
         metrics_previous = cal_metrics(str(int(year) - 1), season, category, brand)
         sub_metrics_previous = metrics_previous.get(sub_metrics_name)
         minus_metrics = minus_dict(metrics, sub_metrics_previous)
+        bar_dict = {"type": "bar", "x": list(minus_metrics.keys()), "y": list(minus_metrics.values()),
+                    "title": sub_metrics_name + ' shifts YoY'}
         ax2.barh(list(minus_metrics.keys()), list(minus_metrics.values()), align='edge')
         for i, v in enumerate(list(minus_metrics.values())):
             ax2.text(v + 1, i, str(v), va='center', fontsize=3)
         bar_path = "data/charts/bar/" + category + ".png"
         ax2.set_title(sub_metrics_name + ' shifts YoY')
         fig2.savefig(bar_path, transparent=True)
-        return bar_path
+        return bar_path, bar_dict
     else:
         return None
 
@@ -294,6 +326,18 @@ def pie_chart_skirt(year, season, brand):
     ax7_path = "data/charts/pie/skirts/" + '_'.join([year, season, str(brand)]) + ".png"
     ax7.set_title("Share of length" + ' '.join([year, season]))
     fig7.savefig(ax7_path, transparent=True)
+
+
+def search_cover_img(year, season, brands):
+    directory_path = 'data/cover-image-all-brands/'
+    file_names = os.listdir(directory_path)
+    year_pattern = re.compile(year[-2:])
+    if season == 'springsummer':
+        season_pattern = re.compile('ss', re.IGNORECASE)
+    brand_pattern = re.compile(brands[0], re.IGNORECASE)
+    for file in file_names:
+        if year_pattern.search(file) and season_pattern.search(file) and brand_pattern.search(file):
+            return directory_path + file
 
 
 def search_img(year, season, category, brands):
