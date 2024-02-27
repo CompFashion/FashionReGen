@@ -55,7 +55,7 @@ with gr.Blocks(css=css) as demo:
             api_key = gr.Textbox(label='api key')
             new_report = gr.Checkbox(label='new report')
             check_exist = gr.Button(value='check existed report')
-            check_result = gr.Markdown()
+            # check_result = gr.Markdown()
             generate = gr.Button(value='generate')
         with gr.Column(scale=3):
             with gr.Column(elem_classes=['title_page']):
@@ -113,8 +113,13 @@ with gr.Blocks(css=css) as demo:
     overview_dict = gr.Json(visible=False)
     section_dict = gr.Json(visible=False)
 
-    check_exist.click(fn=existed_report.check_exist_repost, inputs=[year, season, category, brand, generative_model],
-                   outputs=check_result)
+    check_exist.click(fn=existed_report.return_exist_report, inputs=[year, season, category, brand, generative_model],
+                      outputs=[cover_img, content, description, chart_path, line_path, img1, img2, img3,
+                               section_fig1, section_fig2,
+                               section_fig3, section_fig4, section_description, section_fig5, section_fig6,
+                               section_fig7,
+                               section_fig8, section_description2, overview_dict, section_dict])
+
     generate.click(fn=get_content, inputs=[year, season, category, brand, new_report, generative_model, api_key],
                    outputs=[cover_img, content, description, chart_path, line_path, img1, img2, img3,
                             section_fig1, section_fig2,
