@@ -15,10 +15,10 @@ def description_gen_GPT(year_need, season_need, cate_need, images, api_key):
                      'Topweights': 'Topweights', 'Trousers&Shorts': 'Trousers__Shorts'}
     # cate = "Dresses___Skirts"  # "Jackets___Coats" #
     cate = cate_need_dic[cate_need]
-    season = "A_W"  # "S_S"
+    season = "S_S"
     season_year = season + "_" + year
 
-    conf["name"] = "_".join([cate, season, year])
+    conf["name"] = "_".join([cate, season])
     conf["overview"] = True
     wgsn_data = json.load(open("description_generation/wgsn_report_data/conf.json"))
     wgsn_report_slot_image = overview_analysis_gen.get_report_slot_image_data(wgsn_data)
@@ -66,7 +66,7 @@ def description_gen_GPT(year_need, season_need, cate_need, images, api_key):
     try:
         results = response.json()["choices"][0]["message"]["content"]
     except KeyError:
-        results = 'LLM api error: ' + str(response.json()['error'])
+        results = 'LLM api error: ' + response.json()['error']['message']
     return results
 
 
@@ -80,7 +80,7 @@ def description_gen_gemini(year_need, season_need, cate_need, images, api_key):
                      'Topweights': 'Topweights', 'Trousers&Shorts': 'Trousers__Shorts'}
     # cate = "Dresses___Skirts"  # "Jackets___Coats" #
     cate = cate_need_dic[cate_need]
-    season = "A_W"  # "S_S"
+    season = "S_S"
     season_year = season + "_" + year
 
     conf["name"] = "_".join([cate, season, year])
@@ -115,15 +115,17 @@ def section_description_gen_GPT(sub_cate, year_need, season_need, cate_need, ima
     client = OpenAI(api_key=api_key)
 
     conf = {}
-    year = "23"
+    year = "24"
     cate_need_dic = {'Dresses&Skirts': "Dresses___Skirts", 'Jackets&Coats&Outerwear': 'Jackets___Coats',
                      'Topweights': 'Topweights', 'Trousers&Shorts': 'Trousers__Shorts_Suits___Sets'}
     # cate = "Dresses___Skirts"  # "Jackets___Coats" #
     cate = cate_need_dic[cate_need]
+    if cate == 'Trousers__Shorts_Suits___Sets':
+        year = "23"
     # sub_cate = "skirts"
-    season = "A_W"  # "S_S"
-    if sub_cate == "shorts" or sub_cate == 'trousers':
-        season = "S_S"
+    season = "S_S"
+    # if sub_cate == "shorts" or sub_cate == 'trousers':
+    #     season = "S_S"
     season_year = season + "_" + year
     conf["name"] = "_".join([cate, season, year])
     conf["overview"] = True
@@ -139,7 +141,7 @@ def section_description_gen_GPT(sub_cate, year_need, season_need, cate_need, ima
     base64_image_list = section_analysis_gen.encode_image(images)
 
     text_instruct = "You are given several charts describing the fashion status specifically for %s of %s. Each chart is about one specific aspect, e.g., fabric, sihloette. Try to generate a very short and neat piece of description (MUST less than 2 sentence) that can give an overview of the category or highlight the most significant trend in more general tone. Please DO NOT make it too specific on specific aspects. I will give you several examples for reference: [%s]. please try to get the tone and style of the descriptions and apply then in your generation. " % (
-        sub_cate, "_".join([year, season]), ";;".join(example_list))
+        sub_cate, "_".join([year_need, season_need]), ";;".join(example_list))
 
     message = [
         {"role": "system",
@@ -170,7 +172,7 @@ def section_description_gen_GPT(sub_cate, year_need, season_need, cate_need, ima
     try:
         results = response.json()["choices"][0]["message"]["content"]
     except KeyError:
-        results = 'LLM api error: ' + str(response.json()['error'])
+        results = 'LLM api error: ' + response.json()['error']['message']
     return results
 
 
@@ -180,15 +182,15 @@ def section_description_gen_gemini(sub_cate, year_need, season_need, cate_need, 
     prompt = list()
 
     conf = {}
-    year = "23"
+    year = "24"
     cate_need_dic = {'Dresses&Skirts': "Dresses___Skirts", 'Jackets&Coats&Outerwear': 'Jackets___Coats',
                      'Topweights': 'Topweights', 'Trousers&Shorts': 'Trousers__Shorts_Suits___Sets'}
     # cate = "Dresses___Skirts"  # "Jackets___Coats" #
     cate = cate_need_dic[cate_need]
-    # sub_cate = "skirts"
-    season = "A_W"  # "S_S"
-    if sub_cate == "shorts" or sub_cate == 'trousers':
-        season = "S_S"
+    if cate == 'Trousers__Shorts_Suits___Sets':
+        year = "23"
+    season = "S_S"
+
     season_year = season + "_" + year
     conf["name"] = "_".join([cate, season, year])
     conf["overview"] = True
@@ -202,7 +204,7 @@ def section_description_gen_gemini(sub_cate, year_need, season_need, cate_need, 
     example_list = section_analysis_gen.get_examples(wgsn_report_slot_image, season_year, cate, sub_cate, conf)
 
     text_instruct = "You are given several charts describing the fashion status specifically for %s of %s. Each chart is about one specific aspect, e.g., fabric, sihloette. Try to generate a very short and neat piece of description (MUST less than 2 sentence) that can give an overview of the category or highlight the most significant trend in more general tone. Please DO NOT make it too specific on specific aspects. I will give you several examples for reference: [%s]. please try to get the tone and style of the descriptions and apply then in your generation. " % (
-        sub_cate, "_".join([year, season]), ";;".join(example_list))
+        sub_cate, "_".join([year_need, season_need]), ";;".join(example_list))
 
     prompt.append(text_instruct)
     for image in images:

@@ -8,14 +8,15 @@ import matplotlib.pyplot as plt
 
 import existed_report
 import llm_description
+import gradio as gr
 
-GPT_gen = True
+GPT_gen = False
 # f = open(r'./key.yaml', encoding='utf-8')
 # key_data = yaml.load(f.read(), Loader=yaml.FullLoader)
 # api_key = key_data['api_key']
 api_key = ''
 model_selection = 'GPT'
-
+plt.rcParams['figure.figsize'] = [6.4, 4.8]  # [6.4, 4.8]
 category_specific = {'Dresses&Skirts': ['dresses', 'skirts'],
                      'Jackets&Coats&Outerwear': ['coats', 'jackets'],
                      'Topweights': ['blouses and woven tops', 'knits and jersey tops', 'sweaters'],
@@ -43,13 +44,13 @@ fig2, ax2 = plt.subplots()
 fig3, ax3 = plt.subplots()
 fig4, ax4 = plt.subplots()
 # section graph
-fig5, ax5 = plt.subplots()
 fig6, ax6 = plt.subplots()
 fig7, ax7 = plt.subplots()
 fig8, ax8 = plt.subplots()
 
 
 def get_content(year, season, category, brand, new_report, generative_model, api_key_user):
+    brand.sort()
     if season == 'Spring/Summer (S/S)':
         season = 'springsummer'
 
@@ -75,10 +76,10 @@ def get_content(year, season, category, brand, new_report, generative_model, api
         section_dict = get_section_content(year, season, category, brand)
         for sub_cate in category_specific[category]:
             if sub_cate != 'skirts':
-                section_fig1 = "data/charts/bar/" + sub_cate + "_" + year + "_silhouette.png"
-                section_fig2 = "data/charts/bar/" + sub_cate + "_" + year + "_detail.png"
-                section_fig3 = "data/charts/bar/" + sub_cate + "_" + year + "_neckline.png"
-                section_fig4 = "data/charts/bar/" + sub_cate + "_" + year + "_sleeve.png"
+                section_fig1 = "data/charts/SS/bar/" + '_'.join([year, sub_cate, str(brand)]) + "_silhouette.png"
+                section_fig2 = "data/charts/SS/bar/" + '_'.join([year, sub_cate, str(brand)]) + "_detail.png"
+                section_fig3 = "data/charts/SS/bar/" + '_'.join([year, sub_cate, str(brand)]) + "_neckline.png"
+                section_fig4 = "data/charts/SS/bar/" + '_'.join([year, sub_cate, str(brand)]) + "_sleeve.png"
                 if GPT_gen:
                     section_description = section_description_gen(section_gpt_conf.get(sub_cate, sub_cate), year,
                                                                   season,
@@ -96,15 +97,12 @@ def get_content(year, season, category, brand, new_report, generative_model, api
         for sub_cate in category_specific[category]:
             section_fig = list()
             for attri in yoy_bar_attri[sub_cate]:
-                section_fig.append("data/charts/bar/" + "_".join([sub_cate, year, attri]) + ".png")
+                section_fig.append("data/charts/SS/bar/" + "_".join([year, sub_cate, str(brand), attri]) + ".png")
             if sub_cate in share_pie_attri.keys():
-                for attri in share_pie_attri.keys():
-                    section_fig.append("data/charts/pie/" + sub_cate + "/" + '_'.join(
-                        [share_pie_attri[attri], str(int(year) - 1), season,
-                         str(brand)]) + ".png")
-                    section_fig.append(
-                        "data/charts/pie/" + sub_cate + "/" + '_'.join(
-                            [share_pie_attri[attri], year, season, str(brand)]) + ".png")
+                attri = share_pie_attri[sub_cate]
+                section_fig.append(
+                    "data/charts/SS/pie/" + '_'.join([str(int(year) - 1), sub_cate, str(brand), attri]) + '.png')
+                section_fig.append("data/charts/SS/pie/" + '_'.join([year, sub_cate, str(brand), attri]) + '.png')
             if GPT_gen:
                 section_description = section_description_gen(section_gpt_conf.get(sub_cate, sub_cate), year, season,
                                                               category, section_fig)
@@ -113,12 +111,12 @@ def get_content(year, season, category, brand, new_report, generative_model, api
                 section_description = 'to be generated'
             section_description_list.append({"section": sub_cate, "description": section_description})
     if category == 'Dresses&Skirts':
-        section_fig5 = "data/charts/bar/skirts_" + year + "_silhouette.png"
-        section_fig6 = "data/charts/bar/skirts_" + year + "_detail.png"
-        section_fig7 = "data/charts/pie/skirts/" + '_'.join(
-            [share_pie_attri['skirts'], str(int(year) - 1), season, str(brand)]) + ".png"
-        section_fig8 = "data/charts/pie/skirts/" + '_'.join(
-            [share_pie_attri['skirts'], year, season, str(brand)]) + ".png"
+        section_fig5 = "data/charts/SS/bar/" + '_'.join([year, 'skirts', str(brand)]) + "_silhouette.png"
+        section_fig6 = "data/charts/SS/bar/" + '_'.join([year, 'skirts', str(brand)]) + "_detail.png"
+        section_fig7 = "data/charts/SS/pie/" + '_'.join(
+            [str(int(year) - 1), 'skirts', str(brand), share_pie_attri['skirts']]) + ".png"
+        section_fig8 = "data/charts/SS/pie/" + '_'.join(
+            [year, 'skirts', str(brand), share_pie_attri['skirts']]) + ".png"
         if GPT_gen:
             section_description2 = section_description_gen('skirts', year, season, category,
                                                            [section_fig5, section_fig6, section_fig7, section_fig8])
@@ -136,12 +134,14 @@ def get_content(year, season, category, brand, new_report, generative_model, api
                                                                                                         all_figure)
 
     # save to json file
-    if not description.startswith('LLM api error: '):
+    if not description.startswith('LLM api error: ') and GPT_gen:
         existed_report.save_to_file(year, season, category, brand, generative_model, cover_img, content, description,
                                     chart_path, line_path, img1, img2, img3, section_fig1, section_fig2,
                                     section_fig3, section_fig4, section_description, section_fig5, section_fig6,
                                     section_fig7,
                                     section_fig8, section_description2, overview_dict, section_dict)
+    else:
+        raise gr.Error(description[15:])
 
     return (cover_img, content, description, chart_path, line_path, img1, img2, img3, section_fig1, section_fig2,
             section_fig3, section_fig4, section_description, section_fig5, section_fig6, section_fig7,
@@ -170,7 +170,7 @@ def get_overview_content(year, season, category, brand, all_figure):
     else:
         pie_path, pie_dict = pie_chart(year, season, category, brand, sub_category=True)
     # print(str(metrics))
-    bar_path, bar_dict = bar_char(sub_metrics, year, season, category, brand, sub_metrics_name)
+    # bar_path, bar_dict = bar_char(sub_metrics, year, season, category, brand, sub_metrics_name)
     # if category == 'Dresses&Skirts':
     line_path, line_dict = line_chart_all_category(season, year, brand)
     # else:
@@ -183,6 +183,8 @@ def get_overview_content(year, season, category, brand, all_figure):
         description = description_gen(year, season, category, [pie_path, line_path] + all_figure)
     else:
         description = 'to be generated'
+    if description.startswith('LLM api error: '):
+        raise gr.Error(description[15:])
     categories = category_specific.get(category)
     overview_dict = {"type": "overview", "data": [pie_dict, line_dict]}
     return title, description, pie_path, line_path, img_path[img_ind[0]], img_path[img_ind[1]], img_path[
@@ -201,20 +203,28 @@ def get_section_content(year, season, category, brand):
             for item in yoy_bar_attri[cate]:
                 if item not in metrics.keys() or item not in metrics_previous.keys():
                     continue
-                ax5.clear()
+
                 data = minus_dict(metrics[item], metrics_previous[item])
                 x = list(data.keys())
                 y = list(data.values())
                 # Combine keys and values and sort by values
                 sorted_data = sorted(zip(x, y), key=lambda item: item[1], reverse=False)
                 x_sorted, y_sorted = zip(*sorted_data)
+                if len(x_sorted) > 17:
+                    # plt.rcParams['figure.figsize'] = [4.4, len(x_sorted)]
+                    params = {'figure.figsize': [6.4, 0.3*len(x_sorted)]}
+                    plt.rcParams.update(params)
+                fig5, ax5 = plt.subplots()
                 ax5.barh(x_sorted, y_sorted, align='edge')
-                ax5_path = "data/charts/bar/" + "_".join([cate, year, item]) + ".png"
+                ax5_path = "data/charts/SS/bar/" + "_".join([year, cate, str(brand), item]) + ".png"
                 ax5.set_title(item.capitalize() + " shift YoY")
                 item_dict = {"attribute": item, "type": "bar", "x": x_sorted, "y": y_sorted,
                              "title": item.capitalize() + " shift YoY"}
                 dict_data.append(item_dict)
                 fig5.savefig(ax5_path, transparent=True)
+                ax5.clear()
+                params = {'figure.figsize': [6.4, 4.8]}
+                plt.rcParams.update(params)
         if cate in share_pie_attri.keys():
             pie_list = pie_chart_section(year, season, brand, cate)
             for item in pie_list:
@@ -242,7 +252,7 @@ def cal_metrics(year, season, category, brand, sub_category=False):
     for b in brand:
         year_cal = year
         if b == 'givenchy' and year == '2022':
-            year_cal = str(int(year)-1)
+            year_cal = str(int(year) - 1)
         with open(
                 'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year_cal +
                 '-original/category_attribute_count.json', 'r') as file:
@@ -361,11 +371,13 @@ def line_chart_all_category(season, year_cur, brand):
             shares.append(cal_share(year, season, category, brand))
             x.append(year)
         ax4.plot(x, shares, label=category)
+        for a, b in zip(x, shares):
+            ax4.text(a, b, round(b, 2), ha='center', va='bottom', fontsize=10)
         x_list.append(x)
         y_list.append(shares)
         label_list.append(category)
-    ax4.legend()
-    chart_path = "data/charts/line/all_category_" + str(brand) + ".png"
+    ax4.legend(fontsize=10)
+    chart_path = "data/charts/SS/line/all_category_" + '_'.join([year_cur, season, str(brand)]) + ".png"
     line_dict = {"type": "line", "x": x_list.pop(), "y": y_list, "label": label_list,
                  "title": "Change of Category Mix in 2019-" + year_cur}
     ax4.set_title("Change of Category Mix in 2019-" + year_cur)
@@ -402,7 +414,7 @@ def pie_chart(year, season, category, brand, sub_category=False):
                     "title": title}
         ax1.pie(list(ratio.values()), labels=list(ratio.keys()), autopct='%.2f%%')
         ax1.set_title(title)
-    chart_path = "data/charts/pie/" + category + ".png"
+    chart_path = "data/charts/SS/pie/" + '_'.join([year, category, str(brand)]) + ".png"
     fig1.savefig(chart_path, transparent=True)
     return chart_path, pie_dict
 
@@ -418,7 +430,7 @@ def bar_char(metrics, year, season, category, brand, sub_metrics_name):
         ax2.barh(list(minus_metrics.keys()), list(minus_metrics.values()), align='edge')
         for i, v in enumerate(list(minus_metrics.values())):
             ax2.text(v + 1, i, str(v), va='center', fontsize=3)
-        bar_path = "data/charts/bar/" + category + ".png"
+        bar_path = "data/charts/SS/bar/" + category + ".png"
         ax2.set_title(sub_metrics_name.capitalize() + ' shifts YoY')
         fig2.savefig(bar_path, transparent=True)
         return bar_path, bar_dict
@@ -432,7 +444,7 @@ def line_char(season, category, brand):
     for year in years:
         share.append(cal_share(year, season, category, brand))
     ax3.plot(years, share)
-    chart_path = "data/charts/line/" + category + ".png"
+    chart_path = "data/charts/SS/line/" + category + ".png"
     ax3.set_title("Change of " + category + " mix in 2019-2023")
     fig3.savefig(chart_path, transparent=True)
     return chart_path
@@ -447,8 +459,8 @@ def pie_chart_section(year, season, brand, category):
     metrics2 = cal_metrics(year, season, category, brand, sub_category=True)
     data2 = metrics2[share_pie_attri[category]]
     ax6.pie(list(data1.values()), labels=list(data1.keys()), autopct='%.2f%%')
-    ax6_path = "data/charts/pie/" + category + "/" + '_'.join(
-        [share_pie_attri[category], str(int(year) - 1), season, str(brand)]) + ".png"
+    ax6_path = ("data/charts/SS/pie/" + '_'.join(
+        [str(int(year) - 1), category, str(brand), share_pie_attri[category]]) + ".png")
     ax6.set_title(
         "Mix of " + ' '.join([share_pie_attri[category].capitalize(), season_abb[season], str(int(year) - 1)]))
     pie_list.append({"attribute": share_pie_attri[category], "season": season_abb[season], "year": str(int(year) - 1),
@@ -458,8 +470,7 @@ def pie_chart_section(year, season, brand, category):
             [share_pie_attri[category].capitalize(), season_abb[season], str(int(year) - 1)])})
     fig6.savefig(ax6_path, transparent=True)
     ax7.pie(list(data2.values()), labels=list(data2.keys()), autopct='%.2f%%')
-    ax7_path = "data/charts/pie/" + category + "/" + '_'.join(
-        [share_pie_attri[category], year, season, str(brand)]) + ".png"
+    ax7_path = "data/charts/SS/pie/" + '_'.join([year, category, str(brand), share_pie_attri[category]]) + ".png"
     ax7.set_title("Mix of " + ' '.join([share_pie_attri[category].capitalize(), season_abb[season], year]))
     pie_list.append(
         {"attribute": share_pie_attri[category], "season": season_abb[season], "year": year, "type": "pie",
@@ -565,4 +576,5 @@ def section_description_gen(sub_cate, year_need, season_need, cate_need, images)
     if model_selection == 'GPT':
         return llm_description.section_description_gen_GPT(sub_cate, year_need, season_need, cate_need, images, api_key)
     elif model_selection == 'gemini':
-        return llm_description.section_description_gen_gemini(sub_cate, year_need, season_need, cate_need, images, api_key)
+        return llm_description.section_description_gen_gemini(sub_cate, year_need, season_need, cate_need, images,
+                                                              api_key)

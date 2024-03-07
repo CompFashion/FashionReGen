@@ -4,7 +4,8 @@ import json, datetime, os
 def check_exist_repost(year, season, category, brand, generative_model):
     if season == 'Spring/Summer (S/S)':
         season = 'springsummer'
-    file_direct = 'gen_report/'
+    file_direct = 'gen_report/' + generative_model + '/'
+    brand.sort()
     search_name = '_'.join([year, season, category, str(brand), generative_model])
     file_names = os.listdir(file_direct)
     for file in file_names:
@@ -37,14 +38,16 @@ def save_to_file(year, season, category, brand, generative_model, cover_img, con
     for param_name, param_value in params.items():
         if param_name not in exclude_params:
             data[param_name] = param_value
-    with open("gen_report/" + '_'.join(
+    brand.sort()
+    with open("gen_report/" + generative_model + '/' + '_'.join(
             [year, season, category, str(brand), generative_model, str(datetime.datetime.now())]) + '.json',
               'w') as json_file:
         json.dump(data, json_file)
 
 
 def load_file(year, season, category, brand, generative_model):
-    file_direct = 'gen_report/'
+    file_direct = 'gen_report/' + generative_model + '/'
+    brand.sort()
     search_name = '_'.join([year, season, category, str(brand), generative_model])
     file_names = os.listdir(file_direct)
     file_names.sort(reverse=True)
