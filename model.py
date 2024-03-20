@@ -10,7 +10,7 @@ import existed_report
 import llm_description
 import gradio as gr
 
-GPT_gen = False
+GPT_gen = True
 # f = open(r'./key.yaml', encoding='utf-8')
 # key_data = yaml.load(f.read(), Loader=yaml.FullLoader)
 # api_key = key_data['api_key']
@@ -212,7 +212,7 @@ def get_section_content(year, season, category, brand):
                 x_sorted, y_sorted = zip(*sorted_data)
                 if len(x_sorted) > 17:
                     # plt.rcParams['figure.figsize'] = [4.4, len(x_sorted)]
-                    params = {'figure.figsize': [6.4, 0.3*len(x_sorted)]}
+                    params = {'figure.figsize': [6.4, 0.3 * len(x_sorted)]}
                     plt.rcParams.update(params)
                 fig5, ax5 = plt.subplots()
                 ax5.barh(x_sorted, y_sorted, align='edge')
@@ -366,9 +366,12 @@ def line_chart_all_category(season, year_cur, brand):
         for year in years:
             if int(year) > int(year_cur):
                 break
-            if brand == 'givenchy' and year == '2022':
-                continue
-            shares.append(cal_share(year, season, category, brand))
+            if brand == ['givenchy'] and year == '2022':
+                # Take the average of 2021 and 2023, because lacking 2022
+                share = (cal_share('2021', season, category, brand) + cal_share('2023', season, category, brand)) / 2
+            else:
+                share = cal_share(year, season, category, brand)
+            shares.append(share)
             x.append(year)
         ax4.plot(x, shares, label=category)
         for a, b in zip(x, shares):
@@ -382,7 +385,7 @@ def line_chart_all_category(season, year_cur, brand):
                  "title": "Change of Category Mix in 2019-" + year_cur}
     ax4.set_title("Change of Category Mix in 2019-" + year_cur)
     fig4.savefig(chart_path, transparent=True)
-    plt.show()
+    # plt.show()
     return chart_path, line_dict
 
 

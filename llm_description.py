@@ -33,18 +33,24 @@ def description_gen_GPT(year_need, season_need, cate_need, images, api_key):
     base64_image_list = overview_analysis_gen.encode_image(images)
 
     example_list = overview_analysis_gen.get_examples(wgsn_report_slot_image, season_year, cate, conf)
-    text_instruct = "You are given several charts describing the fashion status specifically for %s of %s. Each chart is about one specific aspect, e.g., fabric, sihloette. You are also given several examples of textual analysis based on charts as follows: %s. Try to generate several paragraphs (less than FIVE) in the format of an article. The length of the article should be around 250 characters. Do not use any key points or subtitles. " % (
+    # text_instruct = "You are given several charts describing the fashion status specifically for %s of %s. Each chart is about one specific aspect, e.g., fabric, sihloette. You are also given several examples of textual analysis based on charts as follows: %s. Try to generate several paragraphs (less than FIVE) in the format of an article. The length of the article should be around 250 characters. Do not use any key points or subtitles. " % (
+    #     cate_need, "_".join([year_need, season_need]), ";".join(example_list))
+    # text_v1 = "[Task Description] Your job is to generate textual fashion analysis based on given charts describing statistics on detailed aspects. [Input Description] You are given several charts describing the fashion status specifically for %s of %s. Given charts are various in format, mainly including bars, plots and pies. The bars mostly describe year-on-year change of specific elements in various aspects, while the plots and pies demonstrate the long-term development and the share of specific elements or categories, respectively. [Generation Requirement] The generated textual analysis needs to be 1. Data-driven: presenting findings based on quantitative data; 2. Insightful interpretation: not only reporting data but also providing interpretation and analysis of the trends observed. 3. Clear and informative: making the writing straightforward, effectively conveying insights without unnecessary complexity and presenting statistics and trends in a direct manner. [Example] You are also given several examples of textual analysis based on charts as follows: %s. [Outfit format] Please try to make the generated article less than five paragraphs, containing no more than 250 characters. Do not use any key points or subtitles. "% (
+    #     cate_need, "_".join([year_need, season_need]), ";".join(example_list))
+    # text_v2 = "[Task Description] Your job is to generate textual fashion analysis based on given charts describing statistics on detailed aspects. [Input Description] You are given several charts describing the fashion status specifically for %s of %s. Given charts are various in format, mainly including bars, plots and pies. The bars mostly describe year-on-year change of specific elements in various aspects, while the plots and pies demonstrate the long-term development and the share of specific elements or categories, respectively. [Generation Requirement] The generated textual analysis needs to be 1. Data-driven: presenting findings based on quantitative data; 2. Insightful interpretation: not only reporting data but also providing interpretation and analysis of the trends observed. 3. Clear and informative: making the writing straightforward, effectively conveying insights without unnecessary complexity and presenting statistics and trends in a direct manner. [Outfit format] Please try to make the generated article less than five paragraphs, containing no more than 250 characters. Do not use any key points or subtitles. " % (
+    #     cate_need, "_".join([year_need, season_need]))
+    text_v3 = "[Task Description] Your job is to generate textual fashion analysis based on given charts describing statistics on detailed aspects. [Input Description] You are given several charts describing the fashion status specifically for %s of %s. [Generation Requirement] The generated textual analysis needs to be 1. Data-driven: presenting findings based on quantitative data; 2. Insightful interpretation: not only reporting data but also providing interpretation and analysis of the trends observed. 3. Clear and informative: making the writing straightforward, effectively conveying insights without unnecessary complexity and presenting statistics and trends in a direct manner. [Example] You are also given several examples of textual analysis based on charts as follows: %s. [Outfit format] Please try to make the generated article less than five paragraphs, containing no more than 250 characters. Do not use any key points or subtitles. " % (
         cate_need, "_".join([year_need, season_need]), ";".join(example_list))
-
     message = [
         {"role": "system",
-         "content": "You are an analyst who's expertised in fashion. "
+         "content": "You are a fashion expert majoring in analyzing the changes and developments of detailed fashion trends, meanwhile interpret them and discuss the reasons behind to deliver insights."
+         # "You are an analyst who's expertised in fashion. "
          },
         {"role": "user",
          "content": [
                         {
                             "type": "text",
-                            "text": text_instruct
+                            "text": text_v3
                         }]
                     + base64_image_list
          },

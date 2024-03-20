@@ -1,12 +1,14 @@
 import json, datetime, os
 
+prompt_version = 'v3'
+
 
 def check_exist_repost(year, season, category, brand, generative_model):
     if season == 'Spring/Summer (S/S)':
         season = 'springsummer'
     file_direct = 'gen_report/' + generative_model + '/'
     brand.sort()
-    search_name = '_'.join([year, season, category, str(brand), generative_model])
+    search_name = '_'.join([year, season, category, str(brand), generative_model, prompt_version])
     file_names = os.listdir(file_direct)
     for file in file_names:
         if search_name in file:
@@ -15,6 +17,7 @@ def check_exist_repost(year, season, category, brand, generative_model):
             # section_dict = data['section_dict']
             return True
     return False
+
 
 def return_exist_report(year, season, category, brand, generative_model):
     if season == 'Spring/Summer (S/S)':
@@ -28,6 +31,7 @@ def return_exist_report(year, season, category, brand, generative_model):
             data['section_fig6'], data['section_fig7'], data['section_fig8'], data['section_description2'],
             data['overview_dict'], data['section_dict'])
 
+
 def save_to_file(year, season, category, brand, generative_model, cover_img, content, description, chart_path,
                  line_path, img1, img2, img3, section_fig1, section_fig2,
                  section_fig3, section_fig4, section_description, section_fig5, section_fig6, section_fig7,
@@ -40,7 +44,8 @@ def save_to_file(year, season, category, brand, generative_model, cover_img, con
             data[param_name] = param_value
     brand.sort()
     with open("gen_report/" + generative_model + '/' + '_'.join(
-            [year, season, category, str(brand), generative_model, str(datetime.datetime.now())]) + '.json',
+            [year, season, category, str(brand), generative_model, prompt_version,
+             str(datetime.datetime.now())]) + '.json',
               'w') as json_file:
         json.dump(data, json_file)
 
@@ -48,7 +53,7 @@ def save_to_file(year, season, category, brand, generative_model, cover_img, con
 def load_file(year, season, category, brand, generative_model):
     file_direct = 'gen_report/' + generative_model + '/'
     brand.sort()
-    search_name = '_'.join([year, season, category, str(brand), generative_model])
+    search_name = '_'.join([year, season, category, str(brand), generative_model, prompt_version])
     file_names = os.listdir(file_direct)
     file_names.sort(reverse=True)
     for file in file_names:

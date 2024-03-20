@@ -95,7 +95,7 @@ def statement_extraction(years, seasons, categories, brands, generative_model):
     statement_data = list()
 
     count = dict()
-    with open('all_statement.txt', 'w') as statement_file:
+    with open('all_statement_v1.txt', 'w') as statement_file:
         for year in years:
             for season in seasons:
                 for category in categories:
@@ -189,7 +189,7 @@ def save_as_excel():
     brands = ['chanel', 'christian-dior', 'givenchy', 'louis-vuitton', 'saint-laurent', 'valentino']
     generative_model = 'GPT'
     datas = statement_extraction(years, seasons, categories, brands, generative_model)
-    for i in range(1, 1):
+    for i in range(0, len(datas)):
         data = datas[i]
         year = data['year']
         brand = data['brand']
@@ -233,17 +233,9 @@ def save_as_excel():
                     cell.alignment = Alignment(wrap_text=True)
             imgs = get_pics(year, section['section'], brand, False)
             add_img_to_sheet(section_sheet, imgs)
-            # for ind, img_path in enumerate(imgs):
-            #     img = Image(img_path)
-            #     img.height = 540
-            #     img.width = 450
-            #     if 'pie' in img_path:
-            #         img.height = 380
-            #     col = 'F' if ind % 2 == 0 else 'M'
-            #     row = 1 + ind // 2 * 26
-            #     section_sheet.add_image(img, col + str(row))
+
         # Save the workbook
-        workbook.save("data/statement/" + data['name'] + '.xlsx')
+        workbook.save("data/statement_"+existed_report.prompt_version+"/" + data['name'] + '.xlsx')
 
 
 # nltk.download('punkt')
