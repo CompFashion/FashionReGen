@@ -217,7 +217,7 @@ def get_section_content(year, season, category, brand):
                 fig5, ax5 = plt.subplots()
                 ax5.barh(x_sorted, y_sorted, align='edge')
                 ax5_path = "data/charts/SS/bar/" + "_".join([year, cate, str(brand), item]) + ".png"
-                ax5.set_title(item.capitalize() + " shift YoY")
+                ax5.set_title(cate + " " + item.capitalize() + " shift YoY")
                 item_dict = {"attribute": item, "type": "bar", "x": x_sorted, "y": y_sorted,
                              "title": item.capitalize() + " shift YoY"}
                 dict_data.append(item_dict)
