@@ -67,7 +67,7 @@ def description_gen_GPT(year_need, season_need, cate_need, images, api_key):
         "max_tokens": 1000
     }
 
-    response = overview_analysis_gen.requests.post("https://api.openai.com/v1/chat/completions", headers=headers,
+    response = overview_analysis_gen.requests.post("https://api.bjqai.com/v1/chat/completions", headers=headers,
                                                    json=payload)
     try:
         results = response.json()["choices"][0]["message"]["content"]
@@ -174,7 +174,7 @@ def section_description_gen_GPT(sub_cate, year_need, season_need, cate_need, ima
         "max_tokens": 1000
     }
 
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    response = requests.post("https://api.bjqai.com/v1/chat/completions", headers=headers, json=payload)
     try:
         results = response.json()["choices"][0]["message"]["content"]
     except KeyError:

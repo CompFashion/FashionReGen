@@ -7,8 +7,10 @@ import datetime
 import matplotlib.pyplot as plt
 
 import existed_report
+import img_retrieval
 import llm_description
 import gradio as gr
+from corrector import corrector
 
 GPT_gen = True
 # f = open(r'./key.yaml', encoding='utf-8')
@@ -149,11 +151,6 @@ def get_content(year, season, category, brand, new_report, generative_model, api
 
 
 def get_overview_content(year, season, category, brand, all_figure):
-    # plt.clf()
-    # sub_cate = category.split('&')
-    # cate_str = str()
-    # for item in sub_cate:
-    #     cate_str = cate_str + item
     if season == 'springsummer':
         title = '# Catwalk Analytics: ' + category + ' S/S ' + year[-2:]
     else:
@@ -169,24 +166,36 @@ def get_overview_content(year, season, category, brand, all_figure):
         pie_path, pie_dict = pie_chart(year, season, category, brand)
     else:
         pie_path, pie_dict = pie_chart(year, season, category, brand, sub_category=True)
-    # print(str(metrics))
-    # bar_path, bar_dict = bar_char(sub_metrics, year, season, category, brand, sub_metrics_name)
-    # if category == 'Dresses&Skirts':
     line_path, line_dict = line_chart_all_category(season, year, brand)
-    # else:
-    #     line_path, line_dict = charts_calculation.element_trend_plot(year, season, category, brand)
-    img_path = search_img(year, season, category, brand)
-    # random select k imgs
-    img_ind = random.sample(range(len(img_path)), 3)
     if GPT_gen:
-
-        description = description_gen(year, season, category, [pie_path, line_path] + all_figure)
+        images = [pie_path, line_path] + all_figure
+        description = description_gen(year, season, category, images)
+        with open(os.path.join('gen_report/pre_correct', '%s_%s_%s_%s_%s.txt' % (
+        year, season, category, str(brand), str(datetime.datetime.now()))), 'w', encoding='utf-8') as file:
+            file.write(description)
+        description = corrector.work_flow(description, category, images)
     else:
         description = 'to be generated'
     if description.startswith('LLM api error: '):
         raise gr.Error(description[15:])
+
+    if len(brand) == 1:
+        try:
+            summary = img_retrieval.summary.get_summary(description)
+            img_path = img_retrieval.matching.get_matching_score(summary, brand, season, year)
+            img1, img2, img3 = img_path[0], img_path[1], img_path[2]
+        except Exception as e:
+            print(e)
+
+    if len(brand) > 1 or img1 is None:
+        summary = "missing because of multiple brands or llm api error."
+        img_path = search_img(year, season, category, brand)
+        # random select k imgs
+        img_ind = random.sample(range(len(img_path)), 3)
+        img1, img2, img3 = img_path[img_ind[0]], img_path[img_ind[1]], img_path[img_ind[2]]
+
     categories = category_specific.get(category)
-    overview_dict = {"type": "overview", "data": [pie_dict, line_dict]}
+    overview_dict = {"type": "overview", "data": [pie_dict, line_dict], "summary": summary}
     return title, description, pie_path, line_path, img_path[img_ind[0]], img_path[img_ind[1]], img_path[
         img_ind[2]], overview_dict
 

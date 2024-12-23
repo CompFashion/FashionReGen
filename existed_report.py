@@ -24,6 +24,10 @@ def return_exist_report(year, season, category, brand, generative_model):
         season = 'springsummer'
     if check_exist_repost(year, season, category, brand, generative_model):
         data = load_file(year, season, category, brand, generative_model)
+        if brand[0] not in data['content']:
+            index = data['content'].find(category)
+            insert_position = index + len(category)
+            data['content'] = data['content'][:insert_position] + ' '+' '.join(brand).upper() + ' '+ data['content'][insert_position:]
         return (
             data['cover_img'], data['content'], data['description'], data['chart_path'], data['line_path'],
             data['img1'], data['img2'], data['img3'], data['section_fig1'], data['section_fig2'],
