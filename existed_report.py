@@ -1,4 +1,7 @@
-import json, datetime, os
+import json
+import datetime
+import os
+
 
 prompt_version = 'v3'
 
@@ -27,6 +30,7 @@ def return_exist_report(year, season, category, brand, generative_model):
         if brand[0] not in data['content']:
             index = data['content'].find(category)
             insert_position = index + len(category)
+            # add brand name in the report title
             data['content'] = data['content'][:insert_position] + ' '+' '.join(brand).upper() + ' '+ data['content'][insert_position:]
         return (
             data['cover_img'], data['content'], data['description'], data['chart_path'], data['line_path'],
