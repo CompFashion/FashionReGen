@@ -2,7 +2,11 @@
 This file for calculating fashion metrics and plot charts.
 '''
 import json
+import os.path
+
 from matplotlib import pyplot as plt
+
+import constants
 from constants import category_specific, share_pie_attri, season_abb, years
 
 fig1, ax1 = plt.subplots()
@@ -13,7 +17,8 @@ fig4, ax4 = plt.subplots()
 fig6, ax6 = plt.subplots()
 fig7, ax7 = plt.subplots()
 
-def cal_metrics(year, season, category, brand, sub_category=False):
+
+def cal_metrics(year, season, category, brand, sub_category=False, previous=False):
     '''
     这里的metrics为属性中各个子属性所占比例
     :param year:
@@ -28,17 +33,20 @@ def cal_metrics(year, season, category, brand, sub_category=False):
     data_format = {}
     for b in brand:
         year_cal = year
-        if b == 'givenchy' and year == '2022':
-            year_cal = str(int(year) - 1)
-        with open(
-                'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year_cal +
-                '-original/category_attribute_count.json', 'r') as file:
+        if constants.CUSTOMIZED_DATA:
+            if previous:
+                statistical_data_root = f"data/all_brand_data_2019_2023/{constants.compared_collections_title}"
+            else:
+                statistical_data_root = f"data/all_brand_data_2019_2023/{constants.collections_title}"
+        else:
+            if b == 'givenchy' and year == '2022':
+                year_cal = str(int(year) - 1)
+            statistical_data_root = 'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year_cal + '-original'
+        with open(os.path.join(statistical_data_root, 'category_attribute_count.json'), 'r') as file:
             json_string = file.read()
         data = json.loads(json_string)
         amount = 0
-        with open(
-                'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year_cal +
-                '-original/category_count.json', 'r') as file2:
+        with open(os.path.join(statistical_data_root, 'category_count.json'), 'r') as file2:
             json2 = file2.read()
         data2 = json.loads(json2)
         # convert to specific categories according to dictionary above
@@ -96,9 +104,11 @@ def cal_share(year, season, category, brand, sub_category=False):
         for b in brand:
             if b == 'givenchy' and year == '2022':
                 continue
-            with open(
-                    'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year +
-                    '-original/category_count.json', 'r') as file2:
+            if constants.CUSTOMIZED_DATA:
+                statistical_data_root = f"data/all_brand_data_2019_2023/{constants.collections_title}"
+            else:
+                statistical_data_root = 'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year + '-original'
+            with open(os.path.join(statistical_data_root, 'category_count.json'), 'r') as file2:
                 json2 = file2.read()
             data2 = json.loads(json2)
             # convert to specific categories according to dictionary above
@@ -116,9 +126,11 @@ def cal_share(year, season, category, brand, sub_category=False):
         for b in brand:
             if b == 'givenchy' and year == '2022':
                 continue
-            with open(
-                    'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year +
-                    '-original/category_count.json', 'r') as file2:
+            if constants.CUSTOMIZED_DATA:
+                statistical_data_root = f"data/all_brand_data_2019_2023/{constants.collections_title}"
+            else:
+                statistical_data_root = 'data/all_brand_data_2019_2023/' + b + '-' + season + '-' + year + '-original'
+            with open(os.path.join(statistical_data_root, 'category_count.json'), 'r') as file2:
                 json2 = file2.read()
             data2 = json.loads(json2)
             # convert to specific categories according to dictionary above
@@ -199,42 +211,34 @@ def pie_chart(year, season, category, brand, sub_category=False):
     return chart_path, pie_dict
 
 
-def bar_char(metrics, year, season, category, brand, sub_metrics_name):
-    ax2.clear()
-    if int(year) > 2019:
-        metrics_previous = cal_metrics(str(int(year) - 1), season, category, brand)
-        sub_metrics_previous = metrics_previous.get(sub_metrics_name)
-        minus_metrics = minus_dict(metrics, sub_metrics_previous)
-        bar_dict = {"type": "bar", "x": list(minus_metrics.keys()), "y": list(minus_metrics.values()),
-                    "title": sub_metrics_name.capitalize() + ' shifts YoY'}
-        ax2.barh(list(minus_metrics.keys()), list(minus_metrics.values()), align='edge')
-        for i, v in enumerate(list(minus_metrics.values())):
-            ax2.text(v + 1, i, str(v), va='center', fontsize=3)
-        bar_path = "data/charts/SS/bar/" + category + ".png"
-        ax2.set_title(sub_metrics_name.capitalize() + ' shifts YoY')
-        fig2.savefig(bar_path, transparent=True)
-        return bar_path, bar_dict
-    else:
-        return None
-
-
-def line_char(season, category, brand):
-    ax3.clear()
-    share = list()
-    for year in years:
-        share.append(cal_share(year, season, category, brand))
-    ax3.plot(years, share)
-    chart_path = "data/charts/SS/line/" + category + ".png"
-    ax3.set_title("Change of " + category + " mix in 2019-2023")
-    fig3.savefig(chart_path, transparent=True)
-    return chart_path
+def bar_char(year, brand, item, cate, data):
+    x = list(data.keys())
+    y = list(data.values())
+    # Combine keys and values and sort by values
+    sorted_data = sorted(zip(x, y), key=lambda item: item[1], reverse=False)
+    x_sorted, y_sorted = zip(*sorted_data)
+    if len(x_sorted) > 17:
+        # For figure with too many attributes, expand the size
+        params = {'figure.figsize': [6.4, 0.3 * len(x_sorted)]}
+        plt.rcParams.update(params)
+    fig, ax = plt.subplots()
+    ax.barh(x_sorted, y_sorted, align='edge')
+    ax_path = "data/charts/SS/bar/" + "_".join([year, cate, str(brand), item]) + ".png"
+    ax.set_title(cate + " " + item.capitalize() + " shift YoY")
+    item_dict = {"attribute": item, "type": "bar", "x": x_sorted, "y": y_sorted,
+                 "title": item.capitalize() + " shift YoY"}
+    fig.savefig(ax_path, transparent=True)
+    ax.clear()
+    params = {'figure.figsize': [6.4, 4.8]}
+    plt.rcParams.update(params)
+    return item_dict
 
 
 def pie_chart_section(year, season, brand, category):
     pie_list = list()
     ax6.clear()
     ax7.clear()
-    metrics1 = cal_metrics(str(int(year) - 1), season, category, brand, sub_category=True)
+    metrics1 = cal_metrics(str(int(year) - 1), season, category, brand, sub_category=True, previous=True)
     data1 = metrics1[share_pie_attri[category]]
     metrics2 = cal_metrics(year, season, category, brand, sub_category=True)
     data2 = metrics2[share_pie_attri[category]]
@@ -260,6 +264,7 @@ def pie_chart_section(year, season, brand, category):
          "title": "Mix of " + ' '.join([share_pie_attri[category].capitalize(), season_abb[season], year])})
     fig7.savefig(ax7_path, transparent=True)
     return pie_list
+
 
 def merge_dictionaries(dict1, dict2):
     merged_dict = {}

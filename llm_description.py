@@ -1,4 +1,6 @@
 import json
+
+import constants
 from description_generation import overview_analysis_gen, section_analysis_gen
 import requests
 import PIL.Image
@@ -168,7 +170,7 @@ def create_headers_payload(api_key, message, max_tokens=1000):
         "Authorization": f"Bearer {api_key}"
     }
     payload = {
-        "model": "gpt-4o",
+        "model": constants.GPT_MODEL,
         "messages": message,
         "max_tokens": max_tokens
     }

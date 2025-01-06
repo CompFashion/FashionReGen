@@ -5,7 +5,12 @@ https://drive.google.com/drive/folders/1bwsHmLsF9DWIZo18SjKejmW45YOJuwpJ?usp=sha
 2. unzip **data** to directory **./**, containing all catwalk images and statistical results.
 ## Optional
 unzip **gen_report** to directory **./**, containing all generated report by Gemini and GPT.
-# RUN Introduction
+# Report Generation
+1. Prepare catwalk images(Optional)
+2. Edit constants.py.
+3. Create **key.yaml** for api_key.
+4. Run main.py for generation.
+# RUN System Introduction
 1. Run **page.py** for backend service.
 2. The frontend package is https://drive.google.com/file/d/1QziQvacgCic13x1fPEKvBjnq1BScjDv6/view?usp=drive_link. Install nginx for frontend service, the nginx.conf file should contain the following code.
 Then you can visit the webpage by http://localhost/fashionregen.
@@ -51,4 +56,3 @@ Then you can visit the webpage by http://localhost/fashionregen.
 1. **page.py**: The backend service, also containing the Gradio page.
 2. **model.py**: Main functions for report generation.
 3. **metrics.py**: Calculating fashion metrics and plot charts for generation.
-4. 

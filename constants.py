@@ -1,6 +1,11 @@
+GPT_MODEL = "gpt-4o"
+CUSTOMIZED_DATA = True
+source_image_path = "data/"  # source_image_path+collections_title, image path for tagging
+collections_title = "test0106"  # "2019_2023_ss_all", collection title in the source image path, all for all collections
+compared_collections_title = "chanel-springsummer-2023-original"  # manually set the compared data if customized data
 GENERATED = True  # use llm to generate description
 RETRIEVAL = False  # use llm summarization and semantic alignment retrieval to get images
-gpt_base_url = "https://api.uniapi.io"
+gpt_base_url = "https://api.uniapi.io"  # "https://api.bjqai.com"
 model_selection = 'GPT'
 category_specific = {'Dresses&Skirts': ['dresses', 'skirts'],
                      'Jackets&Coats&Outerwear': ['coats', 'jackets'],

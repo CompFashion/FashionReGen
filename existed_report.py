@@ -2,7 +2,6 @@ import json
 import datetime
 import os
 
-
 prompt_version = 'v3'
 
 
@@ -31,7 +30,8 @@ def return_exist_report(year, season, category, brand, generative_model):
             index = data['content'].find(category)
             insert_position = index + len(category)
             # add brand name in the report title
-            data['content'] = data['content'][:insert_position] + ' '+' '.join(brand).upper() + ' '+ data['content'][insert_position:]
+            data['content'] = data['content'][:insert_position] + ' ' + ' '.join(brand).upper() + ' ' + data['content'][
+                                                                                                        insert_position:]
         return (
             data['cover_img'], data['content'], data['description'], data['chart_path'], data['line_path'],
             data['img1'], data['img2'], data['img3'], data['section_fig1'], data['section_fig2'],
@@ -51,11 +51,11 @@ def save_to_file(year, season, category, brand, generative_model, cover_img, con
         if param_name not in exclude_params:
             data[param_name] = param_value
     brand.sort()
-    with open("gen_report/" + generative_model + '/' + '_'.join(
-            [year, season, category, str(brand), generative_model, prompt_version,
-             str(datetime.datetime.now())]) + '.json',
-              'w') as json_file:
+    path = "gen_report/" + generative_model + '/' + '_'.join(
+        [year, season, category, str(brand), generative_model, prompt_version, str(datetime.datetime.now())]) + '.json'
+    with open(path, 'w') as json_file:
         json.dump(data, json_file)
+    print(f"SAVED REPORT IN {path}")
 
 
 def load_file(year, season, category, brand, generative_model):

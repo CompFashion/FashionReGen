@@ -5,13 +5,14 @@ import re
 import datetime
 import matplotlib.pyplot as plt
 
+import constants
 import existed_report
 import img_retrieval
 import llm_description
 import gradio as gr
 from corrector import corrector
 from constants import *
-from metrics import cal_metrics, pie_chart, line_chart_all_category, pie_chart_section, minus_dict
+from metrics import cal_metrics, pie_chart, line_chart_all_category, pie_chart_section, minus_dict, bar_char
 
 plt.rcParams['figure.figsize'] = [6.4, 4.8]  # [6.4, 4.8]
 
@@ -38,8 +39,10 @@ def get_content(year, season, category, brand, new_report, generative_model, api
     all_figure = list()
     global model_selection
     model_selection = generative_model
+
     cover_img = search_cover_img(year, season, brand)
 
+    # get section content
     section_description_list = list()
     section_dict = get_section_content(year, season, category, brand)
     for sub_cate in category_specific[category]:
@@ -56,9 +59,10 @@ def get_content(year, season, category, brand, new_report, generative_model, api
             # generate section description with llm
             section_description = section_description_gen(section_gpt_conf.get(sub_cate, sub_cate), year, season,
                                                           category, section_fig)
-            all_figure = all_figure + section_fig
         else:
             section_description = 'to be generated'
+        all_figure = all_figure + section_fig
+
         section_description_list.append({"section": sub_cate, "description": section_description})
 
     section_dict['description'] = section_description_list
@@ -76,7 +80,7 @@ def get_content(year, season, category, brand, new_report, generative_model, api
                                     all_figure[4], all_figure[5],
                                     all_figure[6], all_figure[7], section_description_list[1]['description'],
                                     overview_dict, section_dict)
-    else:
+    if description.startswith('LLM api error'):
         raise gr.Error(description[15:])
 
     return (cover_img, content, description, chart_path, line_path, img1, img2, img3, all_figure[0], all_figure[1],
@@ -135,8 +139,13 @@ def get_overview_content(year, season, category, brand, all_figure):
         summary = "missing because of multiple brands or llm api error."
         img_path = search_img(year, season, category, brand)
         # random select k imgs
-        img_ind = random.sample(range(len(img_path)), 3)
-        img1, img2, img3 = img_path[img_ind[0]], img_path[img_ind[1]], img_path[img_ind[2]]
+        img_ind = random.sample(range(len(img_path)), min(3, len(img_path)))
+        if len(img_path) < 3:
+            for i in range(len(img_path), 3):
+                img_path.append("Lack related images")
+            img1, img2, img3 = img_path[0], img_path[1], img_path[2]
+        else:
+            img1, img2, img3 = img_path[img_ind[0]], img_path[img_ind[1]], img_path[img_ind[2]]
 
     overview_dict = {"type": "overview", "data": [pie_dict, line_dict], "summary": summary}
     return title, description, pie_path, line_path, img1, img2, img3, overview_dict
@@ -148,55 +157,42 @@ def get_section_content(year, season, category, brand):
     for cate in cates:
         cate_dict = {"category": cate.capitalize()}
         metrics = cal_metrics(year, season, cate, brand, sub_category=True)
-        metrics_previous = cal_metrics(str(int(year) - 1), season, cate, brand, sub_category=True)
+        metrics_previous = cal_metrics(str(int(year) - 1), season, cate, brand, sub_category=True, previous=True)
         if metrics:
             dict_data = list()
             for item in yoy_bar_attri[cate]:
                 if item not in metrics.keys() or item not in metrics_previous.keys():
                     continue
-
                 data = minus_dict(metrics[item], metrics_previous[item])
-                x = list(data.keys())
-                y = list(data.values())
-                # Combine keys and values and sort by values
-                sorted_data = sorted(zip(x, y), key=lambda item: item[1], reverse=False)
-                x_sorted, y_sorted = zip(*sorted_data)
-                if len(x_sorted) > 17:
-                    # For figure with too many attributes, expand the size
-                    params = {'figure.figsize': [6.4, 0.3 * len(x_sorted)]}
-                    plt.rcParams.update(params)
-                fig, ax = plt.subplots()
-                ax.barh(x_sorted, y_sorted, align='edge')
-                ax_path = "data/charts/SS/bar/" + "_".join([year, cate, str(brand), item]) + ".png"
-                ax.set_title(cate + " " + item.capitalize() + " shift YoY")
-                item_dict = {"attribute": item, "type": "bar", "x": x_sorted, "y": y_sorted,
-                             "title": item.capitalize() + " shift YoY"}
+                item_dict = bar_char(year, brand, item, cate, data)
                 dict_data.append(item_dict)
-                fig.savefig(ax_path, transparent=True)
-                ax.clear()
-                params = {'figure.figsize': [6.4, 4.8]}
-                plt.rcParams.update(params)
-        if cate in share_pie_attri.keys():
-            pie_list = pie_chart_section(year, season, brand, cate)
-            for item in pie_list:
-                dict_data.append(item)
-        cate_dict["data"] = dict_data
-        dict_list.append(cate_dict)
+            if cate in share_pie_attri.keys():
+                pie_list = pie_chart_section(year, season, brand, cate)
+                for item in pie_list:
+                    dict_data.append(item)
+            cate_dict["data"] = dict_data
+            dict_list.append(cate_dict)
 
     section_dict = {"type": "section", "data": dict_list}
     return section_dict
 
 
 def search_cover_img(year, season, brands):
-    directory_path = 'data/cover-image-all-brands/'
-    file_names = os.listdir(directory_path)
-    year_pattern = re.compile(year[-2:])
-    if season == 'springsummer':
-        season_pattern = re.compile('ss', re.IGNORECASE)
-    brand_pattern = re.compile(brands[0], re.IGNORECASE)
-    for file in file_names:
-        if year_pattern.search(file) and season_pattern.search(file) and brand_pattern.search(file):
-            return directory_path + file
+    if not constants.CUSTOMIZED_DATA:
+        directory_path = 'data/cover-image-all-brands/'
+        file_names = os.listdir(directory_path)
+        year_pattern = re.compile(year[-2:])
+        if season == 'springsummer':
+            season_pattern = re.compile('ss', re.IGNORECASE)
+        brand_pattern = re.compile(brands[0], re.IGNORECASE)
+        for file in file_names:
+            if year_pattern.search(file) and season_pattern.search(file) and brand_pattern.search(file):
+                return directory_path + file
+    else:
+        # randomly select cover img for customized data
+        folder_path = os.path.join(constants.source_image_path, constants.collections_title)
+        selected_image = random.choice(os.listdir(folder_path))
+        return os.path.join(folder_path, selected_image)
 
 
 def search_img(year, season, category, brands):
