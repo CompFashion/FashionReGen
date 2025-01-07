@@ -1,5 +1,5 @@
 GPT_MODEL = "gpt-4o"
-CUSTOMIZED_DATA = True
+CUSTOMIZED_DATA = True  # if use self-prepared catwalk images and need tagging, set True
 source_image_path = "data/"  # source_image_path+collections_title, image path for tagging
 collections_title = "test0106"  # "2019_2023_ss_all", collection title in the source image path, all for all collections
 compared_collections_title = "chanel-springsummer-2023-original"  # manually set the compared data if customized data
