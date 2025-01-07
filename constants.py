@@ -1,11 +1,13 @@
-GPT_MODEL = "gpt-4o"
-CUSTOMIZED_DATA = True  # if use self-prepared catwalk images and need tagging, set True
+GPT_MODEL = "gpt-4o"  # must be multimodal LLM, only support GPT-series model, recommend gpt-4o
+CUSTOMIZED_DATA = True  # if use self-prepared catwalk images and need tagging, set True. Else download the example data
 source_image_path = "data/"  # source_image_path+collections_title, image path for tagging
 collections_title = "test0106"  # "2019_2023_ss_all", collection title in the source image path, all for all collections
 compared_collections_title = "chanel-springsummer-2023-original"  # manually set the compared data if customized data
+gpt_base_url = "https://api.openai.com"
 GENERATED = True  # use llm to generate description
+
+# do not change the following content
 RETRIEVAL = False  # use llm summarization and semantic alignment retrieval to get images
-gpt_base_url = "https://api.uniapi.io"  # "https://api.bjqai.com"
 model_selection = 'GPT'
 category_specific = {'Dresses&Skirts': ['dresses', 'skirts'],
                      'Jackets&Coats&Outerwear': ['coats', 'jackets'],
