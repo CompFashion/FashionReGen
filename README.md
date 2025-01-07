@@ -4,8 +4,15 @@ This repository contains the code for the FashionReGen paper, which proposes an 
 
 ![framework.png](framework.png)
 _Yujuan Ding, Yunshan Ma, Wenqi Fan, Yige Yao, Tat-Seng Chua, and Qing Li. 2024. FashionReGen: LLM-Empowered Fashion Report Generation. In Companion Proceedings of the ACM Web Conference 2024 (WWW '24). Association for Computing Machinery, New York, NY, USA, 991–994. https://doi.org/10.1145/3589335.3651232_
+
 ## Getting Started
-Run [main.py](main.py) to implement the entire pipeline. It will use the following codes and their functions are listed below:
+### Key Steps for Report Generation
+1. Prepare catwalk images. You can also download the example data from google drive, see details in Dataset section below.
+2. Edit constants.py.
+3. Create a **key.yaml** for api_key.
+4. Run [main.py](main.py) to implement the entire pipeline. 
+
+It will use the following codes and their functions are listed below:
 ### Settings
 [constants.py](constants.py) contains all the settings. **Edit this file to customize for your specific needs before running.**
 ### Tagging
@@ -25,19 +32,15 @@ Run [main.py](main.py) to implement the entire pipeline. It will use the followi
 2. [section_analysis_gen.py](description_generation%2Fsection_analysis_gen.py) provides helper functions for textual section analysis generation.
 3. [llm_description.py](llm_description.py) includes functions for **textual analysis generation with LLM**.
 4. [prompt.py](prompt.py) includes prompts for textual analysis generation.
-## Step for Report Generation
-1. Prepare catwalk images(Optional)
-2. Edit constants.py.
-3. Create a **key.yaml** for api_key.
-4. Run main.py for generation.
+
 
 ## Dataset  
 https://drive.google.com/drive/folders/1bwsHmLsF9DWIZo18SjKejmW45YOJuwpJ?usp=sharing  
 ### Compulsory
-1. unzip **wgsn_report_data** to directory **./description_generation**
-2. unzip **data** to directory **./**, containing all catwalk images and statistical results.
+unzip **wgsn_report_data** to directory **./description_generation**
 ### Optional
-unzip **gen_report** to directory **./**, containing all generated report by Gemini and GPT.
+1. unzip **data** to directory **./**, containing all catwalk images and statistical results.
+2. unzip **gen_report** to directory **./**, containing all generated report by Gemini and GPT.
 
 ## RUN UI System(Optional)
 1. Run **page.py** for backend service。
