@@ -7,7 +7,7 @@ _Yujuan Ding, Yunshan Ma, Wenqi Fan, Yige Yao, Tat-Seng Chua, and Qing Li. 2024.
 
 ## Getting Started
 ### Key Steps for Report Generation
-1. Prepare catwalk images. You can also download the example data from google drive, see details in Dataset section below.
+1. Prepare **catwalk images**. You can also download the example data from google drive, see details in Dataset section below.
 2. Edit constants.py.
 3. Create a **key.yaml** for api_key.
 4. Run [main.py](main.py) to implement the entire pipeline. 
@@ -39,7 +39,7 @@ https://drive.google.com/drive/folders/1bwsHmLsF9DWIZo18SjKejmW45YOJuwpJ?usp=sha
 ### Compulsory
 unzip **wgsn_report_data** to directory **./description_generation**
 ### Optional
-1. unzip **data** to directory **./**, containing all catwalk images and statistical results.
+1. unzip **data** to directory **./**, containing all catwalk images and statistical results. **You can use catwalk images here as target images**.
 2. unzip **gen_report** to directory **./**, containing all generated report by Gemini and GPT.
 
 ## RUN UI System(Optional)
