@@ -1,15 +1,14 @@
 # FashionReGen
 ## Overview
-This repository contains the code for the FashionReGen paper, which proposes an LLM-empowered approach to fashion report generation. It provides a framework for **Catwalk Understanding**, **Collective Organization and Analysis**, and **Fashion Report Generation**, as illustrated in the figure below.
+This repository contains the code for the [FashionReGen paper](https://arxiv.org/abs/2403.06660), which proposes an LLM-empowered approach to fashion report generation. It provides a framework for **Catwalk Understanding**, **Collective Organization and Analysis**, and **Fashion Report Generation**, as illustrated in the figure below.
 
 ![framework.png](framework.png)
-_Yujuan Ding, Yunshan Ma, Wenqi Fan, Yige Yao, Tat-Seng Chua, and Qing Li. 2024. FashionReGen: LLM-Empowered Fashion Report Generation. In Companion Proceedings of the ACM Web Conference 2024 (WWW '24). Association for Computing Machinery, New York, NY, USA, 991–994. https://doi.org/10.1145/3589335.3651232_
 
 ## Getting Started
 ### Key Steps for Report Generation
 1. Prepare **catwalk images**. You can either use your own images or download the example data from Google Drive (see the Dataset section below for details, Dataset Optional 1).
 2. Edit the [constants.py](constants.py) file according to the provided instructions.
-3. Fill in your personal API key in [key.yaml](key.yaml).
+3. Fill in your personal **OpenAI API key** in [key.yaml](key.yaml). Note that the OpenAI API format may change over time, so please update the request format accordingly if any changes occur.
 4. Modify the **year, season, brand and category** in [main.py](main.py) to match the specifics of your catwalk images.
 5. Run [main.py](main.py) to execute the entire pipeline.
 
@@ -38,6 +37,27 @@ unzip **wgsn_report_data** to directory **./description_generation**
 ### Optional
 1. unzip **data** to directory **./**, containing all catwalk images and statistical results. **You can use catwalk images here as target images**.
 2. unzip **gen_report** to directory **./**, containing all generated report by Gemini and GPT.
+## Citing FashionReGen
+If you find this repository useful, please cite our paper:
+```
+@inproceedings{10.1145/3589335.3651232,
+author = {Ding, Yujuan and Ma, Yunshan and Fan, Wenqi and Yao, Yige and Chua, Tat-Seng and Li, Qing},
+title = {FashionReGen: LLM-Empowered Fashion Report Generation},
+year = {2024},
+isbn = {9798400701726},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3589335.3651232},
+doi = {10.1145/3589335.3651232},
+abstract = {Fashion analysis refers to the process of examining and evaluating trends, styles, and elements within the fashion industry to understand and interpret its current state, generating fashion reports. It is traditionally performed by fashion professionals based on their expertise and experience, which requires high labour cost and may also produce biased results for relying heavily on a small group of people. In this paper, to tackle the Fashion Report Generation (FashionReGen) task, we propose an intelligent Fashion Analyzing and Reporting system based the advanced Large Language Models (LLMs), debbed as GPT-FAR. Specifically, it tries to deliver FashionReGen based on effective catwalk analysis, the proposed GPT-FAR system is equipped with several key procedures, namely, catwalk understanding, collective organization and analysis, and report generation. By posing and exploring such an open-ended, complex and domain-specific task of FashionReGen, it is able to test the general capability of LLMs in fashion domain. It also inspires the explorations of more high-level tasks with industrial significance in other domains. Video illustration and more materials of GPT-FAR can be found in https://github.com/CompFashion/FashionReGen.},
+booktitle = {Companion Proceedings of the ACM Web Conference 2024},
+pages = {991–994},
+numpages = {4},
+keywords = {fashion report generation, gpt, large language model, multimodal undersatnding and generation},
+location = {Singapore, Singapore},
+series = {WWW '24}
+}
+```
 
 ## RUN UI System(Optional)
 1. Run **page.py** for backend service。
