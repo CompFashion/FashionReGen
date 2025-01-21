@@ -7,10 +7,8 @@ import matplotlib.pyplot as plt
 
 import constants
 import existed_report
-import img_retrieval
 import llm_description
 import gradio as gr
-from corrector import corrector
 from constants import *
 from metrics import cal_metrics, pie_chart, line_chart_all_category, pie_chart_section, minus_dict, bar_char
 
@@ -127,27 +125,17 @@ def get_overview_content(year, season, category, brand, all_figure):
     if description.startswith('LLM api error: '):
         raise gr.Error(description)
 
-    if len(brand) == 1 and RETRIEVAL:
-        # retrieve imgs through llm
-        try:
-            summary = img_retrieval.summary.get_summary(description)
-            img_path = img_retrieval.matching.get_matching_score(summary, brand, season, year)
-            img1, img2, img3 = img_path[0], img_path[1], img_path[2]
-        except Exception as e:
-            print(e)
+    img_path = search_img(year, season, category, brand)
+    # random select k imgs
+    img_ind = random.sample(range(len(img_path)), min(3, len(img_path)))
+    if len(img_path) < 3:
+        for i in range(len(img_path), 3):
+            img_path.append("Lack related images")
+        img1, img2, img3 = img_path[0], img_path[1], img_path[2]
     else:
-        summary = "missing because of multiple brands or llm api error."
-        img_path = search_img(year, season, category, brand)
-        # random select k imgs
-        img_ind = random.sample(range(len(img_path)), min(3, len(img_path)))
-        if len(img_path) < 3:
-            for i in range(len(img_path), 3):
-                img_path.append("Lack related images")
-            img1, img2, img3 = img_path[0], img_path[1], img_path[2]
-        else:
-            img1, img2, img3 = img_path[img_ind[0]], img_path[img_ind[1]], img_path[img_ind[2]]
+        img1, img2, img3 = img_path[img_ind[0]], img_path[img_ind[1]], img_path[img_ind[2]]
 
-    overview_dict = {"type": "overview", "data": [pie_dict, line_dict], "summary": summary}
+    overview_dict = {"type": "overview", "data": [pie_dict, line_dict]}
     return title, description, pie_path, line_path, img1, img2, img3, overview_dict
 
 
@@ -220,7 +208,7 @@ def search_img(year, season, category, brands):
                     img_name = find_items_with_category(file, cata, directory_path)
                     for item in img_name:
                         item = item.split('item:')[1]
-                        img_path.append('data/2019-2023ss/' + brand + '-' + season + '-' + year + '-original/' + item)
+                        img_path.append(os.path.join(constants.source_image_path, constants.collections_title, item))
     return img_path
 
 
